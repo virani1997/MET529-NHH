@@ -1,0 +1,251 @@
+---
+title: "MET529 - Term Paper (Classification Algorithms to detect human activity)"
+author: "Anonymous"
+date: "2024-11-28"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+Wearable technology has been progressively incorporated into the healthcare sector in recent years, revolutionizing both professional medical practice and personal health monitoring. With applications ranging from illness prevention, rehabilitation, and physical therapy to areas far beyond fitness tracking, devices like Fitbit, Nike FuelBand, and Jawbone Up have made it possible to gather enormous volumes of data on human activities. The quantified self movement, in which people utilize self-monitoring devices to collect comprehensive data about different facets of their lives, is consistent with this trend. Wearable technology has a significant potential impact on the healthcare industry. By enabling the early identification of problems like sedentary behavior, irregular exercise habits, or symptoms associated with chronic illnesses, continuous physical activity monitoring can offer vital insights into an individual's health status (Rodgers et al., 2019; Piwek et al., 2016). Furthermore, wearable technology can now quantify the quality of activity in addition to activity volume thanks to developments in data analytics, particularly the application of machine learning and classification algorithms. This is a useful application for both health professionals and tech enthusiasts (Mukhopadhyay, 2014; Wang et al., 2005).
+
+Processing and understanding data from wearables could be greatly aided by applied analytics using R, one of the top statistical computing environments, particularly in healthcare settings. Due to its broad ecosystem of machine learning libraries and its strong data manipulation and visualization capabilities, R-based analytics is well regarded and is especially well-suited for tasks involving activity recognition (Wickham, 2019; Kuhn & Johnson, 2019). In this project, accelerometer data obtained from wearable sensors during exercise is analyzed using R's applied analytics tools. This information, which was gathered from participants' belts, forearms, arms, and dumbbells while they were executing barbell lifts, offers a chance to investigate classification algorithms that can forecast how these activities will be executed. This project illustrates the use of R for creating predictive models that have immediate uses in healthcare, like remote patient monitoring and customized workout feedback, by distinguishing proper and wrong movements in exercises (Bejarano et al., 2014).
+
+In the medical field, evaluating the quality of an activity is especially helpful for physical therapy and rehabilitation, as proper form is essential to patient recovery and injury prevention. For example, physical therapists may be able to remotely monitor their clients' compliance with recommended rehabilitation regimens by employing wearable sensors to determine whether the patient is executing exercises correctly. This is especially important in light of the COVID-19 epidemic, which has prompted a rise in the use of remote monitoring tools and telehealth services. R's classification algorithms have additional potential uses in preventative health, as seeing abnormal movement patterns could help with the early detection of musculoskeletal conditions. The research aims to show how R-based applied analytics may improve health care applications by making it possible to analyze wearable sensor data accurately and meaningfully, laying the groundwork for more individualized and responsive health interventions.
+
+It is now feasible to get a significant quantity of data on personal activity at a reasonable cost by using gadgets like Fitbit, Nike FuelBand, and Jawbone Up. These gadgets are a part of the quantified self movement, which is a group of enthusiasts that measure themselves on a regular basis for a variety of reasons, such as being tech geeks, finding patterns in their behavior, or improving their health. People frequently measure how much of a certain task they perform, but they hardly ever measure how well they perform it. Six individuals' belt, forearm, arm, and dumbbell accelerometer data will be used in this experiment. They were instructed to lift barbells five various ways, both correctly and incorrectly.
+
+People's activity habits will be predicted by the study. In the train set, this is the ‘classes’ variable. The five different ‘classe’ factors in this dataset are: * Exactly according to the specification (Class A) * Throwing the elbows to the front (Class B) * Lifting the dumbbell only halfway (Class C) * Lowering the dumbbell only halfway (Class D) * Throwing the hips to the front (Class E). The data used in the analysis can be downloaded [here](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv).
+
+# Analysis
+
+## Libraries
+
+The CRAN libraries **readr**, **rsample**, **dplyr**, **nnet**, **rpart**, **caret** and **randomForest** are used in this project.
+
+When importing data into R, especially when working with huge datasets, the **readr** library is crucial. It was created by Hadley Wickham and is a component of the tidyverse ecosystem. It is performance tuned, allowing for quick and effective data reading methods like read_csv and read_tsv. These functions improve readability and interoperability with other tidyverse packages by loading data straight into tibbles, a contemporary substitute for R's base data frames (Wickham, 2019). In projects like this one, where accuracy in data ingestion affects later stages of analysis, readr's functionality—which handles missing values, specifies column types, and provides relevant error messages—minimizes data import problems. In health analytics, where data volumes might be significant, readr's structure also makes it more memory-efficient and able to handle large datasets without stuttering, according to Wickham (2019).
+
+Specifically made for data resampling, the **rsample** package provides a range of functions for performing cross-validation and dividing data into training and testing groups. Because it has tools for Monte Carlo cross-validation, k-fold cross-validation, and bootstrapping, it makes it possible to test machine learning models rigorously (Kuhn & Johnson, 2019). Resampling prevents overfitting and guarantees that models generalize well to fresh data, which is crucial in applications related to health where model accuracy is crucial, making this feature crucial for applied analytics projects. For example, the rsample's initial_split effectively divides the dataset, enabling various analyses without data leakage between the training and testing stages. This package is widely cited in academic and business contexts as a crucial tool for statistical modeling and validation in R, and its design is in line with best practices in model evaluation (Kuhn & Johnson, 2019).
+
+Another tidyverse package, **dplyr**, is essential for data manipulation because it offers a "grammar of data manipulation" that makes difficult data wrangling jobs easier (Wickham , 2019). The main features of dplyr, including filter, select, mutate, summarize, and arrange, let users to employ pipes (%>%) to link actions in an understandable manner. Because of this, dplyr is ideal for preprocessing stages in machine learning processes, where effective data gathering, transformation, and filtering are essential. Dplyr's ability to efficiently handle huge datasets in health data analysis ensures that only pertinent characteristics are kept, which expedites the training of downstream models. According to research, dplyr's data manipulation syntax has gained widespread adoption because it makes R scripts easier to read, improves reproducibility, and simplifies coding (Wickham, 2019).
+
+Multinomial log-linear models and basic neural networks can be implemented using the **nnet** package, a neural network package in R (Venables & Ripley, 2002). Single-hidden-layer neural networks, which are useful for classification tasks like activity form prediction in this project, can be specified by users. Even while nnet is more straightforward than deep learning frameworks, it works well for rapid model testing and training, particularly on datasets of a moderate size. For example, multinomial logistic regression, which may be applied to classification problems with several categories, commonly uses the multinom function within nnet. Venables and Ripley (2002) state that nnet is still widely used in the R community due to its user-friendliness and computational efficiency, which makes it a dependable choice for beginning neural network applications.
+
+One of the most interpretable machine learning models is the decision tree, which may be constructed using functions in the **rpart** package (Recursive Partitioning and Regression Trees). Because they provide transparent decision criteria that are simple for both patients and practitioners to understand, decision trees are very useful in the healthcare industry (Therneau & Atkinson, 1997). By making it possible to build decision tree models that categorize exercise movements using sensor data, rpart facilitates classification tasks in this research. Users can balance the trade-off between model simplicity and accuracy by adjusting tree complexity using the package's rpart function. The predictive potential of decision trees is increased by their compatibility with ensemble techniques like boosting and random forests. The broad use of rpart in industry and scholarly research highlights its versatility and resilience across a range of fields, including health care analytics (Therneau & Atkinson, 1997).
+
+By combining data preparation, model training, tuning, and evaluation, the **caret** (Classification and Regression Training) package in R simplifies the machine learning process (Kuhn, 2008). It has features for automatic model adjustment using grid search and cross-validation, and it supports more than 200 machine learning methods. From linear models to intricate techniques like support vector machines and ensemble approaches, Caret streamlines the administration of several models while offering uniformity and effectiveness across various machine learning workflows. Caret is especially helpful in health care analytics because it makes it possible to quickly prototype and compare models, which is critical when working with patient data where precision is vital (Kuhn, 2013). Because it may standardize model evaluation and integrate with resampling techniques to reduce overfitting, caret is frequently cited in academic literature as a crucial tool for predictive modeling in R (Kuhn, 2008).
+
+The random forest approach, an ensemble learning technique that creates several decision trees and combines their output to increase classification and regression accuracy, can be implemented well with R's **randomForest** package (Breiman, 2001). This package is highly regarded for its resilience and capacity to manage intricate, high-dimensional information, which makes it ideal for uses like wearable sensor data-based human activity detection. In order to decrease overfitting and improve model stability, random forests build a large number of decision trees during training and output the mean prediction (for regression) or the mode of their predictions (for classification). Random forests provide insights into feature importance, which aids in identifying the most important variables influencing predictions, such as particular accelerometer readings in this project. This is especially useful in health analytics, where model interpretability and accuracy are crucial (Rodgers et al., 2019). 
+
+```{r comment="", warning=FALSE}
+suppressPackageStartupMessages(library(readr))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(nnet))
+suppressPackageStartupMessages(library(caret))
+suppressPackageStartupMessages(library(rsample))
+suppressPackageStartupMessages(library(rpart))
+suppressPackageStartupMessages(library(randomForest))
+```
+
+## Data
+
+The data will be downloaded and read into R if it is not accessible. Data will be separated into **test** and **train** categories. Below is a rough snapshot of the data. Of its 160 variables, **classe** is the target variable.
+
+```{r message=FALSE, warning=FALSE, comment=""}
+file_path1 <- "./data/training.csv"
+
+if(!file.exists(file_path1)){
+  dir.create("./data")
+  url <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+  download.file(url, file_path1)
+}
+
+
+data <- read_csv("./data/training.csv")
+
+head(data)
+```
+
+## Data Wrangling
+
+Before going to the modeling stage, a few unnecessary columns must be eliminated. First, the columns with over 19,000 NAs are eliminated. Second, factors were created from the **classe** column. Third, train and test data are separated from the original data. Finally, a few unnecessary columns have been eliminated, including timestamp and id.
+
+```{r comment=""}
+remove_col <- colSums(is.na(data)) > 19000
+data <- data[,!remove_col]
+data <- data %>%
+  select(-1:-7)
+
+data$classe <- as.factor(data$classe)
+
+initial_split <- initial_split(data, prop = 0.8)
+train <- training(initial_split)
+test <- testing(initial_split)
+rm(initial_split)
+```
+
+## Descriptive Statistics
+
+Below is a statistical summary of the various test data variables. 
+
+```{r comment=""}
+summary(test)
+```
+
+## Multinomial Logistic Regression Model
+
+```{r cache=TRUE, comment=""}
+model_multilog <- multinom(classe~., data = train)
+
+train <- train %>%
+  mutate(pred_multilog = predict(model_multilog, newdata = train))
+
+test <- test %>%
+  mutate(pred_multilog = predict(model_multilog, newdata = test))
+
+```
+
+### Accuracy Measures
+
+```{r comment=""}
+conf_mat_multilog_train <- table(actual = train$classe, predicted = train$pred_multilog)
+
+conf_mat_multilog_test <- table(actual = test$classe, predicted = test$pred_multilog)
+
+plot(conf_mat_multilog_train, color = "#3B61EA")
+confusionMatrix(conf_mat_multilog_train)
+
+plot(conf_mat_multilog_test, color = "#3B61EA")
+confusionMatrix(conf_mat_multilog_test)
+```
+
+## KNN
+
+```{r cache=TRUE, comment=""}
+model_knn <- train(classe~., data = train, method = "knn")
+model_knn
+```
+
+### Accuracy measures
+
+```{r comment=""}
+train$pred_knn <- predict(model_knn, newdata = train)
+
+conf_mat_knn_train <- table(actual = train$classe,
+                               predicted = train$pred_knn)
+
+plot(conf_mat_knn_train, color = "#3B61EA")
+confusionMatrix(conf_mat_knn_train)
+
+test$pred_knn <- predict(model_knn, newdata = test)
+
+conf_mat_knn_test <- table(actual = test$classe, 
+                                 predicted = test$pred_knn)
+
+plot(conf_mat_knn_test, color = "#3B61EA")
+confusionMatrix(conf_mat_knn_test)
+```
+
+## Decision Trees
+
+```{r cache=TRUE, comment=""}
+model_dc <- rpart(classe~., data = train, method = "class",
+                control = rpart.control(cp = 0))
+
+plotcp(model_dc)
+printcp(model_dc)
+```
+
+### Pruning
+
+Pruning a decision tree based on complexity parameter allows to extract better results from a decision tree model. 
+
+
+```{r comment=""}
+model_dc_pruned <- prune(model_dc, cp = 2.2799e-04)
+rm(model_dc)
+```
+
+### Accuracy Measures
+
+```{r comment=""}
+train$pred_dc <- predict(model_dc_pruned, newdata = train, type = "class")
+
+conf_mat_tree_train <- table(actual = train$classe,
+                                predicted = train$pred_dc)
+
+plot(conf_mat_tree_train, color = "#3B61EA")
+confusionMatrix(conf_mat_tree_train)
+
+test$pred_dc <- predict(model_dc_pruned, newdata = test, type = "class")
+
+conf_mat_tree_test <- table(actual = test$classe,
+                           predicted = test$pred_dc)
+
+plot(conf_mat_tree_test, color = "#3B61EA")
+confusionMatrix(conf_mat_tree_test)
+```
+
+## Ensemble Method: Random Forest
+
+```{r}
+model_rf <- randomForest(formula = classe~., data = train, ntree = 500)
+```
+
+### Accuracy Measures
+
+```{r}
+train$pred_rf <- predict(model_rf, newdata = train)
+conf_mat_rf_train <- table(actual = train$classe, predicted = train$pred_rf)
+
+plot(conf_mat_rf_train, color = "#3B61EA")
+confusionMatrix(conf_mat_rf_train)
+
+test$pred_rf <- predict(model_rf, newdata = test)
+conf_mat_rf_test <- table(actual = test$classe, predicted = test$pred_rf)
+
+plot(conf_mat_rf_test, color = "#3B61EA")
+confusionMatrix(conf_mat_rf_test)
+```
+
+# Conclusion
+
+This study demonstrates the enormous potential of wearable technology in the medical field, particularly when paired with machine learning and sophisticated data analytics. This study shows that information from wearable sensors may accurately predict how exercises are completed by classifying human activity, especially the quality of exercise form. The study shows how R-based machine learning methods, including random forests, decision trees, k-nearest neighbors, and multinomial logistic regression, can accurately distinguish between workout movements that are executed correctly and incorrectly.
+
+The random forest classifier produced the highest overall accuracy among the tested models, demonstrating its resilience while processing high-dimensional, complicated data, such accelerometer measurements from several sensors. This is in line with findings in scholarly literature that highlight the applicability of random forests for wearable data because of their capacity to manage heterogeneous feature sets and their resistance to overfitting (Rodgers et al., 2019; Wickham, 2019). The project also emphasizes the significance of feature engineering and data preprocessing, which were essential for removing duplicate or unnecessary data and improving model performance. Kuhn and Johnson (2019) confirmed this procedure in their work on feature selection.
+
+The project's insights have important ramifications for applications in healthcare. By enabling medical personnel to precisely watch patient development and take swift action when aberrations in exercise form are identified, remote exercise quality monitoring has the potential to completely transform physical therapy and rehabilitation. By spotting unusual movement patterns that could point to the early stages of musculoskeletal problems, this method can be applied to preventive care (Bejarano et al., 2014). Additionally, wearable sensor data combined with R-based analytics presents a feasible solution for remote patient monitoring as telehealth gains traction, especially in the wake of the COVID-19 pandemic.
+
+All things considered, this study shows how R-based analytics can greatly improve our capacity to decipher and respond to human activity data in healthcare settings when applied to wearable sensor data. Analytics-driven insights can assist therapeutic interventions and preventive measures by enabling accurate and continuous tracking of patient activities, which can lead to better health outcomes and a more individualized approach to care. Neural networks may provide even more detailed insights from wearable data, thus future studies might investigate incorporating deep learning techniques for activity detection. The generalizability of these models might also be strengthened by extending this analysis to encompass a larger demographic sample and a greater range of activities, opening the door for their use in many health scenarios. As a result, this initiative establishes the foundation for applied analytics in wearable technology, highlighting its revolutionary potential in contemporary healthcare.
+
+# References
+
+Bejarano, N. C., Ambrosini, E., Pedrocchi, A., Ferrigno, G., Monticone, M., & Ferrante, S. (2014). A novel adaptive, real-time algorithm to detect gait events from wearable sensors. IEEE transactions on neural systems and rehabilitation engineering, 23(3), 413-422.
+
+Breiman, L. (2001). Random forests. Machine learning, 45, 5-32.
+
+Kuhn, M. (2008). Building predictive models in R using the caret package. Journal of statistical software, 28, 1-26.
+
+Kuhn, M. (2013). Applied predictive modeling.
+
+Kuhn, M., & Johnson, K. (2019). Feature engineering and selection: A practical approach for predictive models. Chapman and Hall/CRC
+
+Mukhopadhyay, S. C. (2014). Wearable sensors for human activity monitoring: A review. IEEE sensors journal, 15(3), 1321-1330.
+
+Piwek, L., Ellis, D. A., Andrews, S., & Joinson, A. (2016). The rise of consumer health wearables: promises and barriers. PLoS medicine, 13(2), e1001953.
+
+Rodgers, M. M., Alon, G., Pai, V. M., & Conroy, R. S. (2019). Wearable technologies for active living and rehabilitation: Current research challenges and future opportunities. Journal of rehabilitation and assistive technologies engineering, 6, 2055668319839607.
+
+Therneau, T. M., & Atkinson, E. J. (1997). An introduction to recursive partitioning using the RPART routines (Vol. 61, p. 452). Mayo Foundation: Technical report.
+
+Venables, W. N., & Ripley, B. D. (2013). Modern applied statistics with S-PLUS. Springer Science & Business Media.
+
+Wang, S., Yang, J., Chen, N., Chen, X., & Zhang, Q. (2005, October). Human activity recognition with user-free accelerometers in the sensor networks. In 2005 International Conference on Neural Networks and Brain (Vol. 2, pp. 1212-1217). IEEE.
+
+Wickham, H. (2019). Advanced r. chapman and hall/CRC.
